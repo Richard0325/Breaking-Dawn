@@ -5,14 +5,17 @@ from selenium.webdriver.support import expected_conditions as EC
 import os
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
+
 BBCUrl="http://bbcsfx.acropolis.org.uk"
 options = webdriver.ChromeOptions()
 options.add_argument('--no-sandbox')
 options.add_argument("--headless")
 
+
 def WaitWebLoaded(driver):
     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".progress.wclear")))
     return None
+
 def GetBBCSoundCatList(url):
     driver=webdriver.Chrome(chrome_options=options)
     driver.get(url)
