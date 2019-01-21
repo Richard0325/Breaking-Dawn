@@ -3,25 +3,33 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import os
-from urllib.request import urlopen
+import time
+from urllib.request import Request,urlopen
 from bs4 import BeautifulSoup
-
 BBCUrl="http://bbcsfx.acropolis.org.uk"
 options = webdriver.ChromeOptions()
 options.add_argument('--no-sandbox')
 options.add_argument("--headless")
 
-
 def WaitWebLoaded(driver):
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".progress.wclear")))
+    IsPageLoaded=False
+    while not IsPageLoaded:
+        try:
+            WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".progress.wclear")))
+            IsPageLoaded=True
+        except:
+            driver.refresh()
+            print("Loading current page again")
     return None
-
 def GetBBCSoundCatList(url):
     driver=webdriver.Chrome(chrome_options=options)
     driver.get(url)
     WaitWebLoaded(driver)
+
+
     #print(element)
     soup=BeautifulSoup(driver.page_source,'html.parser')
+
     cats=soup.find_all('option')
     #print(cats)
     catlist=[]
@@ -39,6 +47,7 @@ def GetBBCSoundCatList(url):
 #print(soup.prettify())
 
 
+#url='http://bbcsfx.acropolis.org.uk'
 def GetCatUrl(cat):
     CatUrl=BBCUrl+'/?cat='+cat
     return CatUrl
@@ -47,9 +56,20 @@ def SaveWavToDir(BBCWavName,output_dir,output_name):
     BBCWavSource = "http://bbcsfx.acropolis.org.uk/assets/"
     WavSouce=BBCWavSource+BBCWavName
     #print(WavSouce)
-    r = urlopen(WavSouce)
-    #print(r.getcode())
-    wav = r.read()
+    headers = {}
+    headers['User-Agent'] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36"
+    req = Request(WavSouce, headers=headers)
+    IsDone=False
+    while not IsDone:
+        try:
+            r = urlopen(req)
+            wav = r.read()
+            print(r.getcode())
+            IsDone=True
+        except:
+            time.sleep(5)
+            print("-------reload file---------")
+
     wav_name = output_dir + "/" + output_name+".wav"
     #print(wav_name)
     r.close()
@@ -63,7 +83,8 @@ def SaveWavToDir(BBCWavName,output_dir,output_name):
 
 def SearchCatUrlListForPages(CatList):
     for Cat in CatList:
-        dir_name=Cat.replace('+','_')        
+        dir_name=Cat.replace('+','_')
+        
         print(dir_name)
         os.mkdir(dir_name)
         CatUrl=GetCatUrl(Cat)
@@ -101,8 +122,11 @@ def SearchCatUrlListForPages(CatList):
 
 if __name__ == "__main__":
     catlist=GetBBCSoundCatList(BBCUrl)
-    SearchCatUrlListForPages(catlist)
+    #
+    catlist1=catlist[135:]
+    #print(catlist[98:])
+    SearchCatUrlListForPages(catlist1)
 
-
+#SearchCatUrlListForPages(["http://bbcsfx.acropolis.org.uk/?cat=abbeys"])
 
 
